@@ -1,0 +1,48 @@
+name: Build TDLib for Android
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y php-cli perl gperf build-essential cmake
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Clone TDLib source
+        run: git clone --depth 1 https://github.com/tdlib/td.git
+
+      - name: Check environment
+        working-directory: td/example/android
+        run: |
+          chmod +x *.sh
+          ./check-environment.sh
+
+      - name: Fetch Android SDK
+        working-directory: td/example/android
+        run: ./fetch-sdk.sh
+
+      - name: Build OpenSSL
+        working-directory: td/example/android
+        run: ./build-openssl.sh
+
+      - name: Build TDLib
+        working-directory: td/example/android
+        run: ./build-tdlib.sh
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: tdlib-android-build
+          path: td/example/android/tdlib/tdlib.zip
+          retention-days: 30
